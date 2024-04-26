@@ -12,6 +12,7 @@ const User = sequelize.define(
     userName: {
       type: DataTypes.STRING(50),
       allowNull: false,
+      validate: { is: /^[a-zA-Z0-9]+$/i },
       unique: true,
     },
     email: {
@@ -23,6 +24,7 @@ const User = sequelize.define(
     homePage: {
       type: DataTypes.STRING(50),
       allowNull: true,
+      validate: { isUrl: true },
     },
   },
   {

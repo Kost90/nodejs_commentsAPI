@@ -12,6 +12,7 @@ const Comments = sequelize.define(
     userName: {
       type: DataTypes.STRING(50),
       allowNull: false,
+      validate: { is: /^[a-zA-Z0-9]+$/i },
     },
     email: {
       type: DataTypes.STRING(25),
@@ -21,6 +22,7 @@ const Comments = sequelize.define(
     homePage: {
       type: DataTypes.STRING(50),
       allowNull: true,
+      validate: { isUrl: true },
     },
     text: {
       type: DataTypes.TEXT,

@@ -1,5 +1,5 @@
 const Comments = require("./Comments");
-const SubComments = require("./SubComments");
+// const SubComments = require("./SubComments");
 
 Comments.hasMany(Comments,{
   foreignKey:"parentID",
@@ -12,5 +12,5 @@ Comments.belongsTo(Comments,{
 
 module.exports = {
   Comments,
-  SubComments,
+  // SubComments,
 };

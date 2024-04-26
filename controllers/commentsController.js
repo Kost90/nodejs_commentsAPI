@@ -1,31 +1,36 @@
 const { Comments } = require("../db/models/Assosiations");
 
 class Controller {
-  constructor(req, res) {
-    this.req = req;
-    this.res = res;
-  }
+  constructor() {}
 
   async getComments(req, res) {
-    const page = req.params.page;
-    const offset = (page - 1) * 25 || 0;
+    const offset = req.offset;
     try {
       const result = await Comments.findAll({
-        // TODO: How to make include dinamyc and show all levels of subcommets in subcomments that it have?
+        // Fetch included levels
         include: [
           {
             model: Comments,
             as: "Subcomment",
+            limit: 25,
+            offset: offset,
+            order: [["createdAt", "DESC"]],
             include: [
               {
                 model: Comments,
                 as: "Subcomment",
                 required: false,
+                limit: 25,
+                offset: offset,
+                order: [["createdAt", "DESC"]],
                 include: [
                   {
                     model: Comments,
                     as: "Subcomment",
                     required: false,
+                    limit: 25,
+                    offset: offset,
+                    order: [["createdAt", "DESC"]],
                   },
                 ],
               },
@@ -48,30 +53,38 @@ class Controller {
   async addComment(req, res) {
     const comment = req.body;
     try {
-      const result = await Comments.create(comment);
-      return res.json(result);
+      // Create parent comment if we didn't take from front side id of parent comment
+      if (comment.parentID === undefined || comment.parentID === null) {
+        const result = await Comments.create(comment);
+        return res.json(result);
+      } else {
+        // Creating children comment from parent commet by parent comment ID wich we received from front side
+        const parentComment = await Comments.findByPk(comment.parentID);
+
+        if (!parentComment) {
+          return res.status(404).send("Parent comment not found");
+        }
+
+        const newSubComment = await Comments.create(comment);
+        await parentComment.addSubcomment(newSubComment);
+
+        return res.json(newSubComment);
+      }
     } catch (error) {
       console.log("error is: ", error);
       return res.send("Can't create new Comment");
     }
   }
 
-  async addSubComment(req, res) {
-    const subCommentData = req.body;
+  async deleteComment(req, res) {
+    const id = req.params.id;
     try {
-      const parentComment = await Comments.findByPk(subCommentData.parentID);
-
-      if (!parentComment) {
-        return res.status(404).send("Parent comment not found");
-      }
-
-      const newSubComment = await Comments.create(subCommentData);
-      await parentComment.addSubcomment(newSubComment);
-
-      return res.json(newSubComment);
+      const result = await Comments.destroy({ where: { commentID: id } });
+      console.log(`Comment with commentID:${id} is deleted successfully!`);
+      return res.json(result);
     } catch (error) {
-      console.log("Error adding sub-comment: ", error);
-      return res.status(500).send("Error adding sub-comment");
+      console.log("error is: ", error);
+      return res.send("Can't delete comment");
     }
   }
 }
